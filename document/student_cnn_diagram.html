@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StudentCNN — từng bước đầy đủ</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --card: #161a22;
+      --border: #2a3140;
+      --text: #e8eaef;
+      --dim: #8b93a5;
+      --in: #6ab0ff;
+      --out: #7dccb3;
+      --arrow: #4a5568;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      padding: 1.25rem 1rem 3rem;
+      line-height: 1.45;
+      font-size: 15px;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+    }
+    .meta {
+      color: var(--dim);
+      font-size: 0.88rem;
+      margin-bottom: 1.75rem;
+      max-width: 52rem;
+    }
+    .meta code { font-family: "IBM Plex Mono", monospace; font-size: 0.85em; color: var(--in); }
+    h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #9ec5ff;
+      margin: 2rem 0 0.75rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h2.small { color: #8fd4b8; }
+    .chain { max-width: 52rem; }
+    .step {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0;
+    }
+    .step .num {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--dim);
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+    .step pre {
+      margin: 0.4rem 0 0;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #c9d0dc;
+    }
+    .tensor {
+      margin-top: 0.5rem;
+      font-size: 0.82rem;
+      font-family: "IBM Plex Mono", monospace;
+    }
+    .tensor .from { color: var(--in); }
+    .tensor .to { color: var(--out); }
+    .arrow {
+      text-align: center;
+      padding: 0.35rem 0;
+      color: var(--arrow);
+      font-size: 1.1rem;
+      user-select: none;
+    }
+    .note {
+      margin-top: 1.5rem;
+      padding: 0.85rem 1rem;
+      border-left: 3px solid #5a6d8a;
+      background: #12151c;
+      color: var(--dim);
+      font-size: 0.88rem;
+      max-width: 52rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>StudentCNN — luồng từng bước (không rút gọn)</h1>
+  <p class="meta">
+    Khớp <code>models/student_cnn.py</code>. <strong>B</strong> = batch size. Tensor ghi dạng <code>[B, C, H, W]</code> (sau bước 1 chiều thì ghi rõ). Mỗi khối conv gồm đủ 3 phép: <code>Conv2d</code> → <code>BatchNorm2d</code> → <code>ReLU(inplace=True)</code>. Mũi tên ↓ = bước tiếp theo trong <code>Sequential</code> hoặc <code>forward</code>.
+  </p>
+
+  <h2 class="small">A. Nhánh <code>image_size &lt;= 32</code> — <code>_make_small_image_backbone()</code> + <code>forward</code></h2>
+  <p class="meta" style="margin-top:-0.5rem">Giả định đầu vào: <code>x</code> có kích thước <strong>[B, 3, 32, 32]</strong> (CIFAR hoặc ảnh đã resize 32×32).</p>
+
+  <div class="chain">
+
+    <div class="step">
+      <div class="num">Bước 1</div>
+      <pre>nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, padding=1, bias=False)
+nn.BatchNorm2d(num_features=64)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 3, 32, 32]</span> → <span class="to">[B, 64, 32, 32]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 2</div>
+      <pre>nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False)
+nn.BatchNorm2d(64)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 64, 32, 32]</span> → <span class="to">[B, 64, 32, 32]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 3</div>
+      <pre>nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1, bias=False)
+nn.BatchNorm2d(128)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 64, 32, 32]</span> → <span class="to">[B, 128, 16, 16]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 4</div>
+      <pre>nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=False)
+nn.BatchNorm2d(128)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 128, 16, 16]</span> → <span class="to">[B, 128, 16, 16]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 5</div>
+      <pre>nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1, bias=False)
+nn.BatchNorm2d(256)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 128, 16, 16]</span> → <span class="to">[B, 256, 8, 8]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 6</div>
+      <pre>nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=False)
+nn.BatchNorm2d(256)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 256, 8, 8]</span> → <span class="to">[B, 256, 8, 8]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 7</div>
+      <pre>nn.Conv2d(256, 512, kernel_size=3, stride=2, padding=1, bias=False)
+nn.BatchNorm2d(512)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 256, 8, 8]</span> → <span class="to">[B, 512, 4, 4]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 8</div>
+      <pre>nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=False)
+nn.BatchNorm2d(512)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 512, 4, 4]</span> → <span class="to">[B, 512, 4, 4]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 9 — cuối <code>self.features</code></div>
+      <pre>nn.AdaptiveAvgPool2d(output_size=1)</pre>
+      <div class="tensor"><span class="from">[B, 512, 4, 4]</span> → <span class="to">[B, 512, 1, 1]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 10 — trong <code>forward</code></div>
+      <pre>torch.flatten(x, dim=1)</pre>
+      <div class="tensor"><span class="from">[B, 512, 1, 1]</span> → <span class="to">[B, 512]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 11</div>
+      <pre>nn.Dropout(p=dropout)   # mặc định dropout=0.3 trong __init__</pre>
+      <div class="tensor"><span class="from">[B, 512]</span> → <span class="to">[B, 512]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 12</div>
+      <pre>nn.Linear(in_features=512, out_features=n_class)</pre>
+      <div class="tensor"><span class="from">[B, 512]</span> → <span class="to">[B, n_class]</span> (logits)</div>
+    </div>
+
+  </div>
+
+  <h2>B. Nhánh <code>image_size &gt; 32</code> — <code>_make_large_image_backbone()</code> + <code>forward</code></h2>
+  <p class="meta" style="margin-top:-0.5rem">Giả định đầu vào: <strong>[B, 3, 224, 224]</strong>.</p>
+
+  <div class="chain">
+
+    <div class="step">
+      <div class="num">Bước 1</div>
+      <pre>nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+nn.BatchNorm2d(64)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 3, 224, 224]</span> → <span class="to">[B, 64, 112, 112]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 2</div>
+      <pre>nn.MaxPool2d(kernel_size=3, stride=2, padding=1)</pre>
+      <div class="tensor"><span class="from">[B, 64, 112, 112]</span> → <span class="to">[B, 64, 56, 56]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 3</div>
+      <pre>nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1, bias=False)
+nn.BatchNorm2d(128)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 64, 56, 56]</span> → <span class="to">[B, 128, 28, 28]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 4</div>
+      <pre>nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1, bias=False)
+nn.BatchNorm2d(128)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 128, 28, 28]</span> → <span class="to">[B, 128, 28, 28]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 5</div>
+      <pre>nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1, bias=False)
+nn.BatchNorm2d(256)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 128, 28, 28]</span> → <span class="to">[B, 256, 14, 14]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 6</div>
+      <pre>nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=False)
+nn.BatchNorm2d(256)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 256, 14, 14]</span> → <span class="to">[B, 256, 14, 14]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 7</div>
+      <pre>nn.Conv2d(256, 512, kernel_size=3, stride=2, padding=1, bias=False)
+nn.BatchNorm2d(512)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 256, 14, 14]</span> → <span class="to">[B, 512, 7, 7]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 8</div>
+      <pre>nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=False)
+nn.BatchNorm2d(512)
+nn.ReLU(inplace=True)</pre>
+      <div class="tensor"><span class="from">[B, 512, 7, 7]</span> → <span class="to">[B, 512, 7, 7]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 9 — cuối <code>self.features</code></div>
+      <pre>nn.AdaptiveAvgPool2d(output_size=1)</pre>
+      <div class="tensor"><span class="from">[B, 512, 7, 7]</span> → <span class="to">[B, 512, 1, 1]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 10</div>
+      <pre>torch.flatten(x, dim=1)</pre>
+      <div class="tensor"><span class="from">[B, 512, 1, 1]</span> → <span class="to">[B, 512]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 11</div>
+      <pre>nn.Dropout(p=dropout)</pre>
+      <div class="tensor"><span class="from">[B, 512]</span> → <span class="to">[B, 512]</span></div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="step">
+      <div class="num">Bước 12</div>
+      <pre>nn.Linear(512, n_class)</pre>
+      <div class="tensor"><span class="from">[B, 512]</span> → <span class="to">[B, n_class]</span></div>
+    </div>
+
+  </div>
+
+  <p class="note">
+    <strong>Ghi chú:</strong> Kích thước <code>H, W</code> sau Conv/MaxPool dùng công thức PyTorch chuẩn; trên đã khớp với <code>student_cnn.py</code>. Phần <code>forward</code> (flatten → dropout → linear) <strong>giống nhau</strong> cho cả hai nhánh sau khi <code>self.features</code> trả về <code>[B, 512, 1, 1]</code>.
+  </p>
+</body>
+</html>

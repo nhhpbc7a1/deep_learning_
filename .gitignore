@@ -1,0 +1,58 @@
+# Python bytecode/cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build/distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Logs
+*.log
+logs/
+
+# ML/DL framework & tooling caches
+.cache/
+.torch/
+.tensorflow/
+.keras/
+.dvc/cache/
+wandb/
+mlruns/
+lightning_logs/
+
+# Model checkpoints/artifacts
+checkpoints/
+runs/
+outputs/
+data_custom/
+data_cifar/
+data_custom_500/
+
+
+# IDE/editor
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

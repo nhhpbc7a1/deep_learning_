@@ -1,0 +1,22 @@
+Requirements for midterm tests.
+Collect a new dataset (named D): at least 5 object classes,
+Design a CNN model (named M1) and train M1 on D for about 100 epochs with image size of 224x224 and size of 32x32. Write log results of those training processes (accuracy of training and testing, loss of training and testing for each epoch).
+Preparing reports: (should be in a word (pdf) file)
+View all accuracy and loss of training and testing in charts or suitable visualization
+Show the best results of testing on D in cases of 224x224 and 32x32.
+Assessment criteria:
+Quality of dataset D
+Run the checkpoint file to verify those best results.
+Ranked results of M1 trained on D (224x224 and 32x32)
+
+
+Requirements for final tests.
+Design a CNN model (named M2). Note that groups can take the model defined in the midterm test in this case (i.e., M1).
+Training M2 on CIFAR-10 and CIFAR-100 about 200 epochs. Write log results of those training processes (accuracy of training and testing, loss of training and testing for each epoch).
+Preparing reports: (should be in a word (pdf) file)
+View all accuracy and loss of training and testing in charts or suitable visualization
+Show the best results of testing on CIFAR-10 and CIFAR-100.
+Assessment criteria:
+Oral examination for each student group: how to design M2, meaning of several learning settings, and ways of training M2 on CIFAR-10 and CIFAR-100.z
+Run the checkpoint file to verify those best results.
+Ranked results of M2 trained on CIFAR-10 and CIFAR-100

@@ -1,0 +1,6 @@
+# Môi trường tham khảo (PyTorch: cài bản phù hợp CUDA/CPU từ pytorch.org)
+torch>=2.0
+torchvision>=0.15
+numpy
+matplotlib>=3.5
+torchsummary
